@@ -2,7 +2,7 @@ import java.util.*;
 
 public class Box{
     private static int counter = 0;
-    private Integer value;
+    public Integer value;
 
     public Box(Integer value) {
         this.value = value;
