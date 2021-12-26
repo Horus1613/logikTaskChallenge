@@ -1,5 +1,4 @@
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Random;
 
 public class LogicTasks {
@@ -8,7 +7,7 @@ public class LogicTasks {
         int position = getNonNormalBox(generatedBoxesInfo.getRandomBoxes());
         System.out.println(position == generatedBoxesInfo.getCorrectBoxPosition());
 
-        for (int i = 0; i < 10000000; i++) {
+        for (int i = 0; i < 1000000; i++) {
             testThisShit();
         }
     }
@@ -16,73 +15,89 @@ public class LogicTasks {
     /* Входные параметры для примера теста
      * тут всегда отличается 7 коробка */
     private static GeneratedData getTwelveBoxesWithOneNonNormalBox() {
+        int pos = 8;
         Box[] randomBoxes = new Box[12];
         for (int i = 0; i < 12; i++) {
             randomBoxes[i] = new Box(5);
         }
-        randomBoxes[7] = new Box(3);
-        return new GeneratedData(randomBoxes, 7);
+        randomBoxes[pos] = new Box(8);
+        return new GeneratedData(randomBoxes, pos);
     }
 
-    private static void testThisShit(){
+    private static void testThisShit() {
         Random random = new Random();
         int boxPos = random.nextInt(12);
-        System.out.println(boxPos);
 
         Box[] boxes = new Box[12];
         for (int i = 0; i < 12; i++) {
             boxes[i] = new Box(5);
         }
 
-        if(random.nextBoolean()){
+        if (random.nextBoolean()) {
             boxes[boxPos].value += 3;
         } else {
             boxes[boxPos].value -= 3;
         }
 
-        if(boxPos != getNonNormalBox(boxes)){
+        if (boxPos != getNonNormalBox(boxes)) {
             System.out.println("YOU ARE IDIOT!");
         }
     }
+
 
     /* Ваша задача - реализовать этот метод.
        getNonNormalBox должен вернуть позицию коробки в массиве, отличающейся по value от остальных одинаковых коробок.
      */
     private static int getNonNormalBox(Box[] boxes) {
-        Box[] normalTriplet = null;
+        Box[] first = Arrays.copyOfRange(boxes, 0, 4);
+        Box[] second = Arrays.copyOfRange(boxes, 4, 8);
 
-        for (int i = 0; i < 12; i += 6) {
-            Box[] left = Arrays.copyOfRange(boxes, i, i + 3);
-            Box[] right = Arrays.copyOfRange(boxes, i + 3, i + 6);
+        int compare = Box.comparing(first, second);
 
-            int compare = Box.comparing(left, right);
-            if (compare == 0) {
-                normalTriplet = left;
-                continue;
+        if (compare == 0) {
+            Box[] normal = prepareTriplet(boxes, 0, 1, 2);
+            Box[] bad = prepareTriplet(boxes, 8, 9, 10);
+            int tripletCompare = Box.comparing(bad, normal);
+
+            if (tripletCompare == 0) {
+                return 11;
             }
 
-            if (Objects.isNull(normalTriplet)) {
-                normalTriplet = Arrays.copyOfRange(boxes, 9, 12);
-            }
-
-            Box[] nonNormalTriplet;
-            int nonNormalTripletStartIndex;
-            if (Box.comparing(left, normalTriplet) == 0) {
-                nonNormalTriplet = right;
-                nonNormalTripletStartIndex = i + 3;
-            } else {
-                nonNormalTriplet = left;
-                nonNormalTripletStartIndex = i;
-            }
-
-            if (Box.comparing(nonNormalTriplet[0], nonNormalTriplet[1]) == 0) {
-                return nonNormalTripletStartIndex + 2;
-            } else {
-                return Box.comparing(nonNormalTriplet[0], nonNormalTriplet[2]) == 0 ? nonNormalTripletStartIndex + 1 : nonNormalTripletStartIndex;
-            }
+            return resolveTriplet(boxes, 8, 9, 10, tripletCompare);
         }
 
-        return 0;
+        Box[] left = Arrays.copyOfRange(boxes, 0, 3);
+        Box[] normal = Arrays.copyOfRange(boxes,8,11);
+        int leftRightCompare = Box.comparing(left, Arrays.copyOfRange(boxes, 3, 6));
+        if(leftRightCompare == 0){
+            return resolvePair(boxes,6,7,11);
+        }
+
+        if(Box.comparing(left, normal)==0){
+            return resolveTriplet(boxes, 3, 4, 5, (-1)*leftRightCompare);
+        } else {
+            return resolveTriplet(boxes, 0, 1, 2, leftRightCompare);
+        }
+
+    }
+
+    private static int resolveTriplet(Box[] boxes, int first, int second, int third, int tripletDiffDirect) {
+        int compare = Box.comparing(boxes[first], boxes[second]);
+        if (compare == 0) {
+            return third;
+        }
+
+        return compare == tripletDiffDirect ? first : second;
+    }
+
+    private static int resolvePair(Box[] boxes, int first, int second, int normal){
+        return Box.comparing(boxes[first], boxes[normal]) == 0
+                ? second
+                : first;
+    }
+
+    private static Box[] prepareTriplet(Box[] boxes, int first, int second, int third) {
+        return new Box[]{boxes[first], boxes[second], boxes[third]};
     }
 }
 
